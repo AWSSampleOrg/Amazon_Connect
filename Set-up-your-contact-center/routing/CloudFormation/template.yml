@@ -1,0 +1,322 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon Connect Sample
+Parameters:
+  ProjectPrefix:
+    Type: String
+    Default: ""
+
+  InstanceArn:
+    Type: String
+
+  TimeZone:
+    Type: String
+    Default: America/New_York
+
+  ContactFlowType:
+    Description: The type of the flow.
+    Type: String
+    Default: CONTACT_FLOW
+    AllowedValues:
+      - CONTACT_FLOW
+      - CUSTOMER_QUEUE
+      - CUSTOMER_HOLD
+      - CUSTOMER_WHISPER
+      - AGENT_HOLD
+      - AGENT_WHISPER
+      - OUTBOUND_WHISPER
+      - AGENT_TRANSFER
+      - QUEUE_TRANSFER
+
+Resources:
+  #-------------------------------------------------------
+  # Connect
+  #-------------------------------------------------------
+  ContactFlow:
+    Type: AWS::Connect::ContactFlow
+    Properties:
+      Content: !Sub |-
+        {
+          "Version": "2019-10-30",
+          "StartAction": "9d6b8d5b-6736-4d0c-a8fc-81081b6d3496",
+          "Metadata": {
+            "entryPointPosition": {
+              "x": 20,
+              "y": 18.4
+            },
+            "ActionMetadata": {
+              "54ed49aa-5e2a-426c-bca5-36ed7c8ef6a8": {
+                "position": {
+                  "x": 247.2,
+                  "y": 187.2
+                },
+                "children": [
+                  "b3c955d6-5be0-4be4-9c6d-cf9e1c3229e3"
+                ],
+                "overrideConsoleVoice": true,
+                "fragments": {
+                  "SetContactData": "b3c955d6-5be0-4be4-9c6d-cf9e1c3229e3"
+                },
+                "overrideLanguageAttribute": true
+              },
+              "b3c955d6-5be0-4be4-9c6d-cf9e1c3229e3": {
+                "position": {
+                  "x": 247.2,
+                  "y": 187.2
+                },
+                "dynamicParams": []
+              },
+              "9d6b8d5b-6736-4d0c-a8fc-81081b6d3496": {
+                "position": {
+                  "x": 83.2,
+                  "y": 368
+                }
+              },
+              "91471703-9511-4888-8055-24019fe390ab": {
+                "position": {
+                  "x": 906.4,
+                  "y": 188
+                }
+              },
+              "a90c0a7f-7956-4b1f-a6e3-96a6a48ca192": {
+                "position": {
+                  "x": 264,
+                  "y": -4.8
+                }
+              },
+              "4c851aac-e7b9-4f4c-9066-ef5c98d9d13b": {
+                "position": {
+                  "x": 698.4,
+                  "y": 31.2
+                }
+              },
+              "cf0d27a1-fa3b-43be-a069-f7991e22f7d7": {
+                "position": {
+                  "x": 484,
+                  "y": 304
+                },
+                "parameters": {
+                  "QueueId": {
+                    "displayName": "Queue"
+                  }
+                },
+                "queue": {
+                  "text": "Queue"
+                }
+              }
+            },
+            "Annotations": [],
+            "name": "ContactFlow",
+            "description": "",
+            "type": "contactFlow",
+            "status": "published",
+            "hash": {}
+          },
+          "Actions": [
+            {
+              "Parameters": {
+                "TextToSpeechEngine": "Neural",
+                "TextToSpeechStyle": "None",
+                "TextToSpeechVoice": "Danielle"
+              },
+              "Identifier": "54ed49aa-5e2a-426c-bca5-36ed7c8ef6a8",
+              "Type": "UpdateContactTextToSpeechVoice",
+              "Transitions": {
+                "NextAction": "b3c955d6-5be0-4be4-9c6d-cf9e1c3229e3"
+              }
+            },
+            {
+              "Parameters": {
+                "LanguageCode": "en-US"
+              },
+              "Identifier": "b3c955d6-5be0-4be4-9c6d-cf9e1c3229e3",
+              "Type": "UpdateContactData",
+              "Transitions": {
+                "NextAction": "a90c0a7f-7956-4b1f-a6e3-96a6a48ca192",
+                "Errors": [
+                  {
+                    "NextAction": "a90c0a7f-7956-4b1f-a6e3-96a6a48ca192",
+                    "ErrorType": "NoMatchingError"
+                  }
+                ]
+              }
+            },
+            {
+              "Parameters": {
+                "FlowLoggingBehavior": "Enabled"
+              },
+              "Identifier": "9d6b8d5b-6736-4d0c-a8fc-81081b6d3496",
+              "Type": "UpdateFlowLoggingBehavior",
+              "Transitions": {
+                "NextAction": "54ed49aa-5e2a-426c-bca5-36ed7c8ef6a8"
+              }
+            },
+            {
+              "Parameters": {},
+              "Identifier": "91471703-9511-4888-8055-24019fe390ab",
+              "Type": "DisconnectParticipant",
+              "Transitions": {}
+            },
+            {
+              "Parameters": {
+                "Text": "Hi, how can I help you."
+              },
+              "Identifier": "a90c0a7f-7956-4b1f-a6e3-96a6a48ca192",
+              "Type": "MessageParticipant",
+              "Transitions": {
+                "NextAction": "cf0d27a1-fa3b-43be-a069-f7991e22f7d7"
+              }
+            },
+            {
+              "Parameters": {},
+              "Identifier": "4c851aac-e7b9-4f4c-9066-ef5c98d9d13b",
+              "Type": "TransferContactToQueue",
+              "Transitions": {
+                "NextAction": "91471703-9511-4888-8055-24019fe390ab",
+                "Errors": [
+                  {
+                    "NextAction": "91471703-9511-4888-8055-24019fe390ab",
+                    "ErrorType": "QueueAtCapacity"
+                  },
+                  {
+                    "NextAction": "91471703-9511-4888-8055-24019fe390ab",
+                    "ErrorType": "NoMatchingError"
+                  }
+                ]
+              }
+            },
+            {
+              "Parameters": {
+                "QueueId": "${Queue.QueueArn}"
+              },
+              "Identifier": "cf0d27a1-fa3b-43be-a069-f7991e22f7d7",
+              "Type": "UpdateContactTargetQueue",
+              "Transitions": {
+                "NextAction": "4c851aac-e7b9-4f4c-9066-ef5c98d9d13b",
+                "Errors": [
+                  {
+                    "NextAction": "91471703-9511-4888-8055-24019fe390ab",
+                    "ErrorType": "NoMatchingError"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      Description: !Sub ${ProjectPrefix}ContactFlow
+      InstanceArn: !Ref InstanceArn
+      Name: !Sub ${ProjectPrefix}ContactFlow
+      State: ACTIVE
+      Type: !Ref ContactFlowType
+
+  HoursOfOperation:
+    Type: AWS::Connect::HoursOfOperation
+    Properties:
+      Config:
+        - Day: SUNDAY
+          StartTime:
+            Hours: 0
+            Minutes: 0
+          EndTime:
+            Hours: 0
+            Minutes: 0
+        - Day: MONDAY
+          StartTime:
+            Hours: 0
+            Minutes: 0
+          EndTime:
+            Hours: 0
+            Minutes: 0
+        - Day: TUESDAY
+          StartTime:
+            Hours: 0
+            Minutes: 0
+          EndTime:
+            Hours: 0
+            Minutes: 0
+        - Day: WEDNESDAY
+          StartTime:
+            Hours: 0
+            Minutes: 0
+          EndTime:
+            Hours: 0
+            Minutes: 0
+        - Day: THURSDAY
+          StartTime:
+            Hours: 0
+            Minutes: 0
+          EndTime:
+            Hours: 0
+            Minutes: 0
+        - Day: FRIDAY
+          StartTime:
+            Hours: 0
+            Minutes: 0
+          EndTime:
+            Hours: 0
+            Minutes: 0
+        - Day: SATURDAY
+          StartTime:
+            Hours: 0
+            Minutes: 0
+          EndTime:
+            Hours: 0
+            Minutes: 0
+      Description: !Sub ${ProjectPrefix}HoursOfOperation
+      InstanceArn: !Ref InstanceArn
+      Name: !Sub ${ProjectPrefix}HoursOfOperation
+      TimeZone: !Ref TimeZone
+
+  Queue:
+    Type: AWS::Connect::Queue
+    Properties:
+      Description: !Sub ${ProjectPrefix}Queue
+      HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
+      InstanceArn: !Ref InstanceArn
+      MaxContacts: 10
+      Name: !Sub ${ProjectPrefix}Queue
+      OutboundCallerConfig:
+        OutboundCallerIdName: !Sub ${ProjectPrefix}OutboundCallerIdName
+        # OutboundCallerIdNumberArn: String
+        # OutboundFlowArn: String
+      # QuickConnectArns:
+      #   - String
+      Status: ENABLED
+
+  RoutingProfile:
+    Type: AWS::Connect::RoutingProfile
+    Properties:
+      AgentAvailabilityTimer: TIME_SINCE_LAST_ACTIVITY # or TIME_SINCE_LAST_INBOUND
+      DefaultOutboundQueueArn: !Sub ${Queue.QueueArn}
+      Description: !Sub ${ProjectPrefix}RoutingProfile
+      InstanceArn: !Ref InstanceArn
+      MediaConcurrencies:
+        - Channel: VOICE
+          Concurrency: 1
+          CrossChannelBehavior:
+            BehaviorType: ROUTE_CURRENT_CHANNEL_ONLY
+        - Channel: CHAT
+          Concurrency: 2
+          CrossChannelBehavior:
+            BehaviorType: ROUTE_CURRENT_CHANNEL_ONLY
+        - Channel: TASK
+          Concurrency: 2
+          CrossChannelBehavior:
+            BehaviorType: ROUTE_CURRENT_CHANNEL_ONLY
+      Name: !Sub ${ProjectPrefix}RoutingProfile
+      QueueConfigs:
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !Ref Queue
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: CHAT
+            QueueArn: !Ref Queue
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: TASK
+            QueueArn: !Ref Queue
