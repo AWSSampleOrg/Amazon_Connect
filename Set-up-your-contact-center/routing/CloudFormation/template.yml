@@ -1,0 +1,191 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Amazon Connect Sample
+Parameters:
+  ProjectPrefix:
+    Type: String
+    Default: ""
+
+  InstanceArn:
+    Type: String
+
+  TimeZone:
+    Type: String
+    Default: America/New_York
+
+  ContactFlowType:
+    Description: The type of the flow.
+    Type: String
+    Default: CONTACT_FLOW
+    AllowedValues:
+      - CONTACT_FLOW
+      - CUSTOMER_QUEUE
+      - CUSTOMER_HOLD
+      - CUSTOMER_WHISPER
+      - AGENT_HOLD
+      - AGENT_WHISPER
+      - OUTBOUND_WHISPER
+      - AGENT_TRANSFER
+      - QUEUE_TRANSFER
+
+Resources:
+  #-------------------------------------------------------
+  # Connect
+  #-------------------------------------------------------
+  ContactFlow:
+    Type: AWS::Connect::ContactFlow
+    Properties:
+      Content: !Sub |-
+        {
+          "Version": "2019-10-30",
+          "StartAction": "54ed49aa-5e2a-426c-bca5-36ed7c8ef6a8",
+          "Metadata": {
+            "entryPointPosition": { "x": 20, "y": 19 },
+            "snapToGrid": false,
+            "ActionMetadata": {
+              "54ed49aa-5e2a-426c-bca5-36ed7c8ef6a8": {
+                "position": { "x": 181, "y": 80 },
+                "overrideConsoleVoice": false,
+                "defaultVoice": "Standard"
+              },
+              "a90c0a7f-7956-4b1f-a6e3-96a6a48ca192": {
+                "position": { "x": 421, "y": 81 },
+                "useDynamic": false
+              },
+              "91471703-9511-4888-8055-24019fe390ab": {
+                "position": { "x": 660, "y": 259 }
+              }
+            }
+          },
+          "Actions": [
+            {
+              "Identifier": "54ed49aa-5e2a-426c-bca5-36ed7c8ef6a8",
+              "Parameters": { "TextToSpeechVoice": "Mizuki" },
+              "Transitions": {
+                "NextAction": "a90c0a7f-7956-4b1f-a6e3-96a6a48ca192",
+                "Errors": [],
+                "Conditions": []
+              },
+              "Type": "UpdateContactTextToSpeechVoice"
+            },
+            {
+              "Identifier": "a90c0a7f-7956-4b1f-a6e3-96a6a48ca192",
+              "Parameters": { "Text": "Hi, how can I help you." },
+              "Transitions": {
+                "NextAction": "91471703-9511-4888-8055-24019fe390ab",
+                "Errors": [],
+                "Conditions": []
+              },
+              "Type": "MessageParticipant"
+            },
+            {
+              "Identifier": "91471703-9511-4888-8055-24019fe390ab",
+              "Type": "DisconnectParticipant",
+              "Parameters": {},
+              "Transitions": {}
+            }
+          ]
+        }
+      Description: !Sub ${ProjectPrefix}ContactFlow
+      InstanceArn: !Ref InstanceArn
+      Name: !Sub ${ProjectPrefix}ContactFlow
+      State: ACTIVE
+      Type: !Ref ContactFlowType
+
+  HoursOfOperation:
+    Type: AWS::Connect::HoursOfOperation
+    Properties:
+      Config:
+        - Day: MONDAY
+          StartTime:
+            Hours: 9
+            Minutes: 0
+          EndTime:
+            Hours: 17
+            Minutes: 0
+        - Day: TUESDAY
+          StartTime:
+            Hours: 9
+            Minutes: 0
+          EndTime:
+            Hours: 17
+            Minutes: 0
+        - Day: WEDNESDAY
+          StartTime:
+            Hours: 9
+            Minutes: 0
+          EndTime:
+            Hours: 17
+            Minutes: 0
+        - Day: THURSDAY
+          StartTime:
+            Hours: 9
+            Minutes: 0
+          EndTime:
+            Hours: 17
+            Minutes: 0
+        - Day: FRIDAY
+          StartTime:
+            Hours: 9
+            Minutes: 0
+          EndTime:
+            Hours: 17
+            Minutes: 0
+      Description: !Sub ${ProjectPrefix}HoursOfOperation
+      InstanceArn: !Ref InstanceArn
+      Name: !Sub ${ProjectPrefix}HoursOfOperation
+      TimeZone: !Ref TimeZone
+
+  Queue:
+    Type: AWS::Connect::Queue
+    Properties:
+      Description: !Sub ${ProjectPrefix}Queue
+      HoursOfOperationArn: !GetAtt HoursOfOperation.HoursOfOperationArn
+      InstanceArn: !Ref InstanceArn
+      MaxContacts: 10
+      Name: !Sub ${ProjectPrefix}Queue
+      OutboundCallerConfig:
+        OutboundCallerIdName: !Sub ${ProjectPrefix}OutboundCallerIdName
+        # OutboundCallerIdNumberArn: String
+        # OutboundFlowArn: String
+      # QuickConnectArns:
+      #   - String
+      Status: ENABLED
+
+  RoutingProfile:
+    Type: AWS::Connect::RoutingProfile
+    Properties:
+      AgentAvailabilityTimer: TIME_SINCE_LAST_ACTIVITY # or TIME_SINCE_LAST_INBOUND
+      DefaultOutboundQueueArn: !Sub ${Queue.QueueArn}
+      Description: !Sub ${ProjectPrefix}RoutingProfile
+      InstanceArn: !Ref InstanceArn
+      MediaConcurrencies:
+        - Channel: VOICE
+          Concurrency: 1
+          CrossChannelBehavior:
+            BehaviorType: ROUTE_CURRENT_CHANNEL_ONLY
+        - Channel: CHAT
+          Concurrency: 2
+          CrossChannelBehavior:
+            BehaviorType: ROUTE_CURRENT_CHANNEL_ONLY
+        - Channel: TASK
+          Concurrency: 2
+          CrossChannelBehavior:
+            BehaviorType: ROUTE_CURRENT_CHANNEL_ONLY
+      Name: !Sub ${ProjectPrefix}RoutingProfile
+      QueueConfigs:
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: VOICE
+            QueueArn: !Ref Queue
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: CHAT
+            QueueArn: !Ref Queue
+        - Delay: 0
+          Priority: 1
+          QueueReference:
+            Channel: TASK
+            QueueArn: !Ref Queue
